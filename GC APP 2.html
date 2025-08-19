@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cálculo de Gastos Comunes de Casa</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        ::placeholder { color: #9ca3af; }
+        /* Animación para el modal de resultados */
+        #results-modal-content {
+            transition: transform 0.3s ease-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 min-h-screen flex items-center justify-center p-4">
+
+    <div class="w-full max-w-md mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 md:p-8 space-y-8">
+        
+        <div class="text-center">
+            <h1 class="text-2xl md:text-3xl font-bold text-blue-600 dark:text-blue-400">Cálculo de Gastos de Casa</h1>
+            <p class="mt-2 text-md text-gray-600 dark:text-gray-400">Tu resumen mensual de consumo y pagos.</p>
+        </div>
+
+        <!-- Contenedor Principal de Inputs -->
+        <div class="space-y-6">
+            <div>
+                <h2 class="text-lg font-semibold mb-3 border-b pb-2">1. Datos del Mes</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label for="mesCalculo" class="block text-sm font-medium mb-1">Mes del Cálculo</label>
+                        <input type="month" id="mesCalculo" class="w-full p-3 bg-gray-50 dark:bg-gray-700 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label for="valorKwh" class="block text-sm font-medium mb-1">Valor del kWh ($)</label>
+                        <input type="number" id="valorKwh" placeholder="Ej: 250" class="w-full p-3 bg-gray-50 dark:bg-gray-700 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <h2 class="text-lg font-semibold mb-3 border-b pb-2">2. Costos Fijos del Mes ($)</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label for="costoPozo" class="block text-sm font-medium mb-1">Costo Fijo Pozo</label>
+                        <input type="number" id="costoPozo" placeholder="Ej: 3000" class="w-full p-3 bg-gray-50 dark:bg-gray-700 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label for="costoInternet" class="block text-sm font-medium mb-1">Costo Internet</label>
+                        <input type="number" id="costoInternet" placeholder="Ej: 12000" class="w-full p-3 bg-gray-50 dark:bg-gray-700 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="sm:col-span-2">
+                         <label for="gastoComun" class="block text-sm font-medium mb-1">Gasto Común Fijo</label>
+                         <input type="text" id="gastoComun" value="$11.000" class="w-full p-3 bg-gray-200 dark:bg-gray-800 border rounded-lg font-bold" readonly>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <h2 class="text-lg font-semibold mb-3 border-b pb-2">3. Consumo de la Casa (kWh)</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label for="consumoAnterior" class="block text-sm font-medium mb-1">Consumo Mes Anterior</label>
+                        <input type="number" id="consumoAnterior" placeholder="Automático" class="w-full p-3 bg-gray-200 dark:bg-gray-800 border rounded-lg" readonly>
+                    </div>
+                    <div>
+                        <label for="consumoActual" class="block text-sm font-medium mb-1">Consumo Mes Actual</label>
+                        <input type="number" id="consumoActual" placeholder="Ingresa tu consumo" class="w-full p-3 bg-gray-50 dark:bg-gray-700 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+            </div>
+            
+            <button id="calcularBtn" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 transition">
+                <i class="fa-solid fa-calculator mr-2"></i>Calcular
+            </button>
+        </div>
+        
+        <div>
+            <h2 class="text-xl font-semibold text-center">Historial de Gastos Mensuales</h2>
+            <div id="history-container" class="mt-4 space-y-3 max-h-48 overflow-y-auto pr-2">
+                <p class="text-center text-gray-500">Tu historial de gastos se mostrará aquí.</p>
+            </div>
+        </div>
+
+        <div id="error-message" class="hidden p-4 mt-2 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800" role="alert"></div>
+    </div>
+
+    <!-- Modal de Resultados -->
+    <div id="results-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-end justify-center p-4 z-50">
+        <div id="results-modal-content" class="w-full max-w-md bg-white dark:bg-gray-800 rounded-t-2xl shadow-xl p-6 space-y-6 transform translate-y-full">
+            <!-- El contenido se inyectará aquí -->
+        </div>
+    </div>
+
+    <script>
+        // --- CONSTANTES Y GLOBALES ---
+        const mesCalculoInput = document.getElementById('mesCalculo');
+        const valorKwhInput = document.getElementById('valorKwh');
+        const costoPozoInput = document.getElementById('costoPozo');
+        const costoInternetInput = document.getElementById('costoInternet');
+        const consumoAnteriorInput = document.getElementById('consumoAnterior');
+        const consumoActualInput = document.getElementById('consumoActual');
+        const calcularBtn = document.getElementById('calcularBtn');
+        const historyContainer = document.getElementById('history-container');
+        const errorMessage = document.getElementById('error-message');
+        const resultsModal = document.getElementById('results-modal');
+        const resultsModalContent = document.getElementById('results-modal-content');
+
+        const GASTO_COMUN_FIJO = 11000;
+        const STORAGE_KEY = 'historialGastosCasaPersonal';
+        let currentCalculationData = null;
+
+        // --- INICIALIZACIÓN ---
+        function inicializarApp() {
+            const now = new Date();
+            mesCalculoInput.value = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
+            
+            autofillPreviousData();
+            displayHistory();
+
+            mesCalculoInput.addEventListener('change', resetFormForNewMonth); // MODIFICADO: Llama a la nueva función de reseteo
+            calcularBtn.addEventListener('click', calcularGastos);
+            resultsModal.addEventListener('click', (e) => {
+                if (e.target.id === 'results-modal') {
+                    hideResultsModal();
+                }
+            });
+        }
+
+        // --- LÓGICA DE ALMACENAMIENTO Y AUTOFILL ---
+        function getHistory() { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+        function saveHistory(history) { localStorage.setItem(STORAGE_KEY, JSON.stringify(history)); }
+
+        function autofillPreviousData() {
+            const history = getHistory();
+            const [year, month] = mesCalculoInput.value.split('-').map(Number);
+            const prevDate = new Date(year, month - 2, 1);
+            const prevMonthId = `${prevDate.getFullYear()}-${(prevDate.getMonth() + 1).toString().padStart(2, '0')}`;
+            const prevRecord = history.find(r => r.id === prevMonthId);
+            consumoAnteriorInput.value = prevRecord ? prevRecord.consumoActual : '';
+        }
+
+        function saveCurrentCalculationToHistory() {
+            if (!currentCalculationData) return;
+            const history = getHistory();
+            const existingIndex = history.findIndex(item => item.id === currentCalculationData.id);
+            if (existingIndex > -1) { history[existingIndex] = currentCalculationData; } 
+            else { history.push(currentCalculationData); }
+            history.sort((a, b) => b.id.localeCompare(a.id));
+            saveHistory(history);
+            
+            hideResultsModal();
+            displayHistory();
+        }
+
+        /**
+         * NUEVA FUNCIÓN: Resetea el formulario cuando se cambia el mes.
+         */
+        function resetFormForNewMonth() {
+            // Limpia los campos de entrada para los nuevos datos del mes
+            valorKwhInput.value = '';
+            costoPozoInput.value = '';
+            costoInternetInput.value = '';
+            consumoActualInput.value = '';
+
+            // Autocompleta el campo "Consumo Anterior" basado en el nuevo mes seleccionado
+            autofillPreviousData();
+
+            // Resetea el área de resultados a su estado inicial
+            const resumenContainer = document.getElementById('resumen-container');
+            if (resumenContainer) {
+                 resumenContainer.innerHTML = '<p class="text-center text-gray-500">El resumen de tu pago aparecerá aquí.</p>';
+            }
+            const saveBtn = document.getElementById('saveBtn');
+            if(saveBtn) saveBtn.classList.add('hidden');
+            currentCalculationData = null;
+            errorMessage.classList.add('hidden');
+        }
+        
+        // --- LÓGICA PRINCIPAL ---
+        function calcularGastos() {
+            errorMessage.classList.add('hidden');
+
+            const valorKwh = parseFloat(valorKwhInput.value);
+            const costoPozo = parseFloat(costoPozoInput.value);
+            const costoInternet = parseFloat(costoInternetInput.value);
+            const consumoActual = parseFloat(consumoActualInput.value);
+            const consumoAnterior = parseFloat(consumoAnteriorInput.value) || 0;
+
+            if ([valorKwh, costoPozo, costoInternet, consumoActual].some(v => isNaN(v)) || valorKwh <= 0 || consumoActual < 0) {
+                showError('Por favor, completa todos los campos con valores numéricos válidos.');
+                return;
+            }
+
+            const diferenciaConsumo = consumoActual - consumoAnterior;
+            const costoConsumo = diferenciaConsumo * valorKwh;
+            const totalPagar = costoConsumo + GASTO_COMUN_FIJO + costoPozo + costoInternet;
+
+            currentCalculationData = {
+                id: mesCalculoInput.value, valorKwh, costoPozo, costoInternet,
+                consumoActual, consumoAnterior, diferenciaConsumo, costoConsumo, totalPagar
+            };
+
+            showResultsModal(currentCalculationData);
+        }
+        
+        // --- LÓGICA DE UI (MODAL Y RESULTADOS) ---
+        function showResultsModal(data) {
+            const difColor = data.diferenciaConsumo >= 0 ? 'text-red-500' : 'text-green-500';
+            const difSign = data.diferenciaConsumo >= 0 ? '+' : '';
+
+            resultsModalContent.innerHTML = `
+                <h2 class="text-xl font-bold text-center">Resumen de ${new Date(data.id + '-02').toLocaleString('es-CL', { month: 'long', year: 'numeric' })}</h2>
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <span class="font-medium">Consumo del Mes:</span>
+                        <span class="font-bold text-lg ${difColor}">${difSign}${data.diferenciaConsumo.toFixed(1)} kWh</span>
+                    </div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 text-right">Actual: ${data.consumoActual} kWh | Anterior: ${data.consumoAnterior} kWh</p>
+                    <hr class="border-gray-300 dark:border-gray-600">
+                    <div class="flex justify-between"><span>Costo por Consumo:</span><span class="font-medium">${formatCurrency(data.costoConsumo)}</span></div>
+                    <div class="flex justify-between"><span>Gasto Común Fijo:</span><span class="font-medium">${formatCurrency(GASTO_COMUN_FIJO)}</span></div>
+                    <div class="flex justify-between"><span>Costo Fijo Pozo:</span><span class="font-medium">${formatCurrency(data.costoPozo)}</span></div>
+                    <div class="flex justify-between"><span>Costo Internet:</span><span class="font-medium">${formatCurrency(data.costoInternet)}</span></div>
+                    <hr class="border-gray-300 dark:border-gray-600">
+                    <div class="flex justify-between text-2xl font-bold text-blue-600 dark:text-blue-400">
+                        <span>Total a Pagar:</span>
+                        <span>${formatCurrency(data.totalPagar)}</span>
+                    </div>
+                </div>
+                <button id="saveBtnModal" class="w-full mt-4 bg-green-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-700 transition">
+                    <i class="fa-solid fa-floppy-disk mr-2"></i>Guardar Mes
+                </button>
+            `;
+            resultsModal.classList.remove('hidden');
+            setTimeout(() => {
+                resultsModalContent.classList.remove('translate-y-full');
+            }, 10);
+
+            document.getElementById('saveBtnModal').addEventListener('click', saveCurrentCalculationToHistory);
+        }
+
+        function hideResultsModal() {
+            resultsModalContent.classList.add('translate-y-full');
+            setTimeout(() => {
+                resultsModal.classList.add('hidden');
+            }, 300);
+        }
+
+        // --- LÓGICA DEL HISTORIAL ---
+        function displayHistory() {
+            const history = getHistory();
+            historyContainer.innerHTML = '';
+            if (history.length === 0) {
+                historyContainer.innerHTML = '<p class="text-center text-gray-500">No hay registros guardados.</p>';
+                return;
+            }
+            history.forEach(record => {
+                const recordDiv = document.createElement('div');
+                recordDiv.className = 'p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg flex justify-between items-center';
+                const monthName = new Date(record.id + '-02').toLocaleString('es-CL', { month: 'long', year: 'numeric' });
+
+                recordDiv.innerHTML = `
+                    <div>
+                        <p class="font-semibold capitalize">${monthName}</p>
+                        <p class="text-xs text-gray-500">Consumo: ${record.diferenciaConsumo.toFixed(1)} kWh</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-bold">${formatCurrency(record.totalPagar)}</p>
+                    </div>
+                `;
+                historyContainer.appendChild(recordDiv);
+            });
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.remove('hidden');
+        }
+
+        function formatCurrency(numero) {
+            return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(numero);
+        }
+        
+        // --- INICIAR LA APP ---
+        document.addEventListener('DOMContentLoaded', inicializarApp);
+    </script>
+</body>
+</html>
